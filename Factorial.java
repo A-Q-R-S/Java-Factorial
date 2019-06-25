@@ -85,6 +85,30 @@ public class Factorial {
 		}
 		return number;
 	}
+	
+	// without threads
+	// TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
+	private static BigInteger solve(int number, int threadCount) {
+		BigInteger result 	= BigInteger.ONE;
+		BigInteger temp 	= BigInteger.ONE;
+		if (threadCount == 0) {
+			threadCount = 1;
+		}
+		
+		/**/long startTime = System.currentTimeMillis();
+		for (int i=0; i<threadCount; i++) {
+			for (int k=i+1; k <= number; k += threadCount) {
+				temp = temp.multiply(BigInteger.valueOf(k));
+			}
+			result = result.multiply(temp);
+			temp = BigInteger.ONE;
+		}
+		
+		
+		/**/long endTime = System.currentTimeMillis();
+		/**/System.out.println("Time without threads: " + (endTime - startTime));
+		return result;
+	}
 
 	
 	//------------------------------------	
@@ -97,6 +121,7 @@ public class Factorial {
 			simulatedThreadCount 	= 0;
 		
 		//TODO: Add clues and specifics for the user
+		//TODO: configure resource strings, not hard-coded
 		threadCount = setThreadCount(in);
 		if (threadCount == 0) {
 			System.out.println("/To enter simulation: (>1)/");
@@ -109,10 +134,18 @@ public class Factorial {
 		
 		Factorial fact = new Factorial (threadCount);
 		
-		//TODO: implement simulation of threads
-		//TODO: implement solver using real threads
-		//TODO: measure time
+		// without threads
+		//TODO: configure resource strings, not hard-coded
+		if (fact.getThreadCount()==0 || fact.getThreadCount()==1) {
+			BigInteger result = solve(number, simulatedThreadCount);
+			System.out.println("Result being printed in txt file...");
+			PrintWriter out = new PrintWriter("out.txt", "UTF-8");
+			out.println(result.toString());
+			out.close();
+		}
+
 		
+		//TODO: implement solver using real threads
 		//TODO: clean up and secure the class
 		
 	}
