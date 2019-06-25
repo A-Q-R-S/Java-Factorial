@@ -143,9 +143,30 @@ public class Factorial {
 			out.println(result.toString());
 			out.close();
 		}
+		
+		// with threads
+		//TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
+		//TODO: configure resource strings, not hard-coded
+		else {
+			/**/long startTime = System.currentTimeMillis();
+			for (int i = 0; i < fact.COUNT_THREADS; i++) {
+				fact.threads[i] = new Thread(new FactorialRunnable(fact, i, number));
+				fact.threads[i].start();
+			}
+
+			for (int i = 0; i < fact.COUNT_THREADS; i++) {
+				fact.threads[i].join();
+			}
+			/**/long endTime = System.currentTimeMillis();
+			/**/System.out.println("Total time: " + (endTime - startTime) + " milliseconds");
+			
+			PrintWriter out2 = new PrintWriter("out2.txt", "UTF-8");
+			out2.println(fact.result.toString());
+			out2.close();
+		}
 
 		
-		//TODO: implement solver using real threads
+		
 		//TODO: clean up and secure the class
 		
 	}
