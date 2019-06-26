@@ -50,11 +50,24 @@ public class FactorialRunnable implements Runnable {
 		/**/long endTime = System.currentTimeMillis();
 		/**/System.out.println("Thread " + thread + ": " + (endTime - startTime) + " milliseconds");
 
-		while (fact.getResult() == BigInteger.ONE && killThread == false) {
-
-			synchronized (fact) {
+		while (fact.getResult() == BigInteger.ONE && killThread == false)
+		{
+			synchronized (fact)
+			{
 				found2Cells = fact.searcher(this);
+				
+				if (!found2Cells) {
+					try {
+						fact.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				else {
+					fact.notifyAll();
+				}
 			}
+			
 			if (found2Cells && fact.calculator(first, second)) {
 				killThread = true;
 			}
