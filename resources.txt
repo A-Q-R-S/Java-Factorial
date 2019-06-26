@@ -1,0 +1,16 @@
+"threadCount" 				%Enter desired thread count: %
+"threadCount_invalid" 		%Please enter a valid thread count: %
+
+"numberToSolve" 			%Enter desired number to solve: %
+"numberToSolve_invalid" 	%Please enter a valid number to solve: %
+
+"time_noThreads" 			%Total time without threads: %
+"time_threads" 				%Total time with threads: %
+"units"						% milliseconds%
+
+"simulationChoice" 			%Simulate threads: Enter desired thread count: %
+
+"resultResponse"			%Result being printed in .txt file...%
+"outFileName_noThreads"		%Result (no threads).txt%
+"outFileName_threads"		%Result (threads).txt%
+"encoding"					%UTF-8%

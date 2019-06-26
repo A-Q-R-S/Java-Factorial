@@ -7,32 +7,33 @@ import java.math.BigInteger;
 import java.util.Scanner;
 
 public class Factorial {
-	private int COUNT_THREADS = 0;
-	private Thread[] threads = null;
-	private BigInteger result = BigInteger.ONE;
+	private int 		threadCount = 0;
+	private Thread[] 	threads = null;
+	private BigInteger 	result = BigInteger.ONE;
+	private static ResourceManager resManager;
 
 	
 	public Factorial () {
-		COUNT_THREADS 		= 0;
-		result 				= BigInteger.ONE;
-		threads 			= null;
+		this.threadCount 		= 0;
+		this.result 			= BigInteger.ONE;
+		this.threads 			= null;
 	}
 	
 	public Factorial (int threadCount) {
 		if (threadCount == 0 || threadCount == 1) {
-			COUNT_THREADS 	= 0;
-			result 			= BigInteger.ONE;
-			threads 		= null;
+			this.threadCount 	= 0;
+			this.result 		= BigInteger.ONE;
+			this.threads 		= null;
 		}
 		else {
-			COUNT_THREADS 	= threadCount;
-			this.result 	= BigInteger.ONE;
-			this.threads 	= new Thread[threadCount];
+			this.threadCount 	= threadCount;
+			this.result 		= BigInteger.ONE;
+			this.threads 		= new Thread[threadCount];
 		}
 	}
 	
 	public BigInteger getResult() {
-		return result;
+		return this.result;
 	}
 
 	public void setResult(BigInteger result) {
@@ -40,7 +41,7 @@ public class Factorial {
 	}
 
 	public int getThreadCount() {
-		return COUNT_THREADS;
+		return this.threadCount;
 	}
 	
 	public static int setThreadCount (Scanner in) {
@@ -48,12 +49,11 @@ public class Factorial {
 		int threadCount = 0;
 		boolean flag = false;
 		
-		// user sets COUNT_THREADS:
 		while (flag == false) {
-			System.out.println("Set COUNT_THREADS: ");		
+			System.out.println(resManager.getResource("threadCount"));
 			while (in.hasNextInt() == false && in.hasNext()) {
 				in.next();
-				System.out.println("Set valid COUNT_THREADS: ");
+				System.out.println(resManager.getResource("threadCount_invalid"));
 			}
 			threadCount = in.nextInt();
 			if (threadCount >= 0) {
@@ -65,24 +65,26 @@ public class Factorial {
 	
 	public static int setNumber (Scanner in) {
 		
-		int number = 0;
-		boolean flag = false;
+		int 	number 	= 0;
+		boolean flag 	= false;
 		
-		// user sets number to solve:
-		flag = false;
-		while (flag == false) {
-			System.out.println("Set number to solve: ");		
-			while (in.hasNextInt() == false&& in.hasNext()) {
+		while (!flag) {
+			System.out.println(resManager.getResource("numberToSolve"));
+
+			while (in.hasNextInt() == false && in.hasNext()) {
 				in.next();
-				System.out.println("Set valid number to solve: ");
+				System.out.println(resManager.getResource("numberToSolve_invalid"));
 			}
+			
 			number = in.nextInt();
+			
 			if (number > 0) {
 				flag = true;
 			} else {
 				number = 0;
 			}
 		}
+		
 		return number;
 	}
 	
@@ -106,7 +108,7 @@ public class Factorial {
 		
 		
 		/**/long endTime = System.currentTimeMillis();
-		/**/System.out.println("Time without threads: " + (endTime - startTime));
+		/**/System.out.println(resManager.getResource("time_noThreads") + (endTime - startTime));
 		return result;
 	}
 
@@ -115,16 +117,16 @@ public class Factorial {
 	public static void main(String[] args)
 			throws InterruptedException, FileNotFoundException, UnsupportedEncodingException {
 		
+		resManager 					= new ResourceManager();
 		Scanner in 					= new Scanner(System.in);
 		int threadCount 			= 0,
 			number					= 0,
 			simulatedThreadCount 	= 0;
 		
 		//TODO: Add clues and specifics for the user
-		//TODO: configure resource strings, not hard-coded
 		threadCount = setThreadCount(in);
 		if (threadCount == 0) {
-			System.out.println("/To enter simulation: (>1)/");
+			System.out.println(resManager.getResource("simulationChoice"));
 			simulatedThreadCount = setThreadCount(in);
 		}
 		number = setNumber(in);
@@ -135,32 +137,33 @@ public class Factorial {
 		Factorial fact = new Factorial (threadCount);
 		
 		// without threads
-		//TODO: configure resource strings, not hard-coded
 		if (fact.getThreadCount()==0 || fact.getThreadCount()==1) {
 			BigInteger result = solve(number, simulatedThreadCount);
-			System.out.println("Result being printed in txt file...");
-			PrintWriter out = new PrintWriter("out.txt", "UTF-8");
+			System.out.println(resManager.getResource("resultResponse"));
+			PrintWriter out = new PrintWriter(
+					resManager.getResource("outFileName_noThreads"), resManager.getResource("encoding"));
 			out.println(result.toString());
 			out.close();
 		}
 		
 		// with threads
 		//TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
-		//TODO: configure resource strings, not hard-coded
 		else {
 			/**/long startTime = System.currentTimeMillis();
-			for (int i = 0; i < fact.COUNT_THREADS; i++) {
+			for (int i = 0; i < threadCount; i++) {
 				fact.threads[i] = new Thread(new FactorialRunnable(fact, i, number));
 				fact.threads[i].start();
 			}
 
-			for (int i = 0; i < fact.COUNT_THREADS; i++) {
+			for (int i = 0; i < threadCount; i++) {
 				fact.threads[i].join();
 			}
 			/**/long endTime = System.currentTimeMillis();
-			/**/System.out.println("Total time: " + (endTime - startTime) + " milliseconds");
+			/**/System.out.println(
+					resManager.getResource("time_threads") + (endTime - startTime) + resManager.getResource("units"));
 			
-			PrintWriter out2 = new PrintWriter("out2.txt", "UTF-8");
+			PrintWriter out2 = new PrintWriter(
+					resManager.getResource("outFileName_threads"), resManager.getResource("encoding"));
 			out2.println(fact.result.toString());
 			out2.close();
 		}
