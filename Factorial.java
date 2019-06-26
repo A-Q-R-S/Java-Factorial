@@ -11,12 +11,13 @@ public class Factorial {
 	private Thread[] 	threads = null;
 	private BigInteger 	result = BigInteger.ONE;
 	private static ResourceManager resManager;
-
+	private Tripple[] 	trippleArray 	= null;
 	
 	public Factorial () {
 		this.threadCount 		= 0;
 		this.result 			= BigInteger.ONE;
 		this.threads 			= null;
+		this.trippleArray 		= null;
 	}
 	
 	public Factorial (int threadCount) {
@@ -24,11 +25,13 @@ public class Factorial {
 			this.threadCount 	= 0;
 			this.result 		= BigInteger.ONE;
 			this.threads 		= null;
+			this.trippleArray 	= null;
 		}
 		else {
 			this.threadCount 	= threadCount;
 			this.result 		= BigInteger.ONE;
 			this.threads 		= new Thread[threadCount];
+			this.trippleArray 	= new Tripple[threadCount];
 		}
 	}
 	
@@ -88,6 +91,67 @@ public class Factorial {
 		return number;
 	}
 	
+	public void fillTrippleArray(int cell, BigInteger threadResult) {
+		trippleArray[cell].fillTripple(threadResult);
+	}
+
+	public boolean searcher (FactorialRunnable object) {
+		
+		boolean searching_1 = true,
+				searching_2 = true,
+				result		= false;
+		int	i = 0,
+			k = 0;
+
+		for (; i<threadCount && searching_1; i++) {
+			if (trippleArray[i].getFlag() == true) {
+				searching_1 = false;
+				
+				for (k=i+1; k<threadCount && searching_2; k++) {
+					if (trippleArray[k].getFlag() == true) {
+						searching_2 = false;
+					}
+				}
+			}
+		}
+		i--; k--;
+		
+		if (searching_1 == false && searching_2 == false)  {
+			trippleArray[i].setFlag(false);
+			trippleArray[k].setFlag(false);
+			object.setFirst(i);
+			object.setSecond(k);
+			result = true;
+		}
+		return result;
+	}
+	
+	public boolean calculator (int first, int second) {
+		
+		boolean result = false;
+
+		if (first >= 0 && second >= 0) {
+			if (trippleArray[first].getFlag()==false && trippleArray[second].getFlag()==false) {
+				int 		scoreFirst 		= trippleArray[first].getScore(),
+							scoreSecond		= trippleArray[second].getScore();
+				BigInteger 	num1 			= trippleArray[first].getNumber(),
+							num2 			= trippleArray[second].getNumber();
+				
+				trippleArray[first].setNumber(num1.multiply(num2));
+				trippleArray[first].setScore(scoreFirst+scoreSecond);		
+				
+				if (scoreFirst+scoreSecond == threadCount) {
+					setResult(trippleArray[first].getNumber());
+				}
+				else {
+					trippleArray[first].setFlag(true);
+					result = true;
+				}
+			}
+		}
+		return result;
+	}
+	
 	// without threads
 	// TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
 	private static BigInteger solve(int number, int threadCount) {
@@ -113,7 +177,9 @@ public class Factorial {
 	}
 
 	
-	//------------------------------------	
+//------------------------------------------------------------------------------------------------------------	
+//---------------------------------------------- M A I N -----------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 	public static void main(String[] args)
 			throws InterruptedException, FileNotFoundException, UnsupportedEncodingException {
 		
@@ -149,7 +215,12 @@ public class Factorial {
 		// with threads
 		//TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
 		else {
+			for (int i=0; i<threadCount; i++) {
+				fact.trippleArray[i] = new Tripple();
+			}
+			
 			/**/long startTime = System.currentTimeMillis();
+			
 			for (int i = 0; i < threadCount; i++) {
 				fact.threads[i] = new Thread(new FactorialRunnable(fact, i, number));
 				fact.threads[i].start();
@@ -158,10 +229,11 @@ public class Factorial {
 			for (int i = 0; i < threadCount; i++) {
 				fact.threads[i].join();
 			}
+			
 			/**/long endTime = System.currentTimeMillis();
 			/**/System.out.println(
 					resManager.getResource("time_threads") + (endTime - startTime) + resManager.getResource("units"));
-			
+			/**/System.out.println(resManager.getResource("resultResponse"));
 			PrintWriter out2 = new PrintWriter(
 					resManager.getResource("outFileName_threads"), resManager.getResource("encoding"));
 			out2.println(fact.result.toString());
