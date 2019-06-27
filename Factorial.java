@@ -1,5 +1,3 @@
-
-
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -7,11 +5,13 @@ import java.math.BigInteger;
 import java.util.Scanner;
 
 public class Factorial {
-	private int 		threadCount = 0;
-	private Thread[] 	threads = null;
-	private BigInteger 	result = BigInteger.ONE;
 	private static ResourceManager resManager;
-	private Tripple[] 	trippleArray 	= null;
+	private int					numberToSolve	= 0;
+	private int 				threadCount 	= 0;
+	private Thread[] 			threads 		= null;
+	private BigInteger 			result 			= BigInteger.ONE;
+	private Tripple[] 			trippleArray 	= null;
+	public static final int[]	workSplit 		= {30,25,20,15,10,5};
 	
 	public Factorial () {
 		this.threadCount 		= 0;
@@ -20,19 +20,19 @@ public class Factorial {
 		this.trippleArray 		= null;
 	}
 	
-	public Factorial (int threadCount) {
+	public Factorial (int numberToSolve, int threadCount) {
 		if (threadCount == 0 || threadCount == 1) {
 			this.threadCount 	= 0;
-			this.result 		= BigInteger.ONE;
 			this.threads 		= null;
 			this.trippleArray 	= null;
 		}
 		else {
 			this.threadCount 	= threadCount;
-			this.result 		= BigInteger.ONE;
 			this.threads 		= new Thread[threadCount];
-			this.trippleArray 	= new Tripple[threadCount];
+			this.trippleArray 	= new Tripple[threadCount * workSplit.length];
 		}
+		this.numberToSolve	= numberToSolve;
+		this.result 		= BigInteger.ONE;
 	}
 	
 	public BigInteger getResult() {
@@ -41,6 +41,10 @@ public class Factorial {
 
 	public void setResult(BigInteger result) {
 		this.result = result;
+	}
+
+	public int getNumberToSolve() {
+		return this.numberToSolve;
 	}
 
 	public int getThreadCount() {
@@ -90,33 +94,33 @@ public class Factorial {
 		
 		return number;
 	}
-	
-	public void fillTrippleArray(int cell, BigInteger threadResult) {
-		trippleArray[cell].fillTripple(threadResult);
+
+	public void fillTrippleArray(int cell, BigInteger threadResult, int score) {
+		trippleArray[cell].fillTripple(threadResult, score);
 	}
 
 	public boolean searcher (FactorialRunnable object) {
 		
-		boolean searching_1 = true,
-				searching_2 = true,
+		boolean searchingA 	= true,
+				searchingB 	= true,
 				result		= false;
 		int	i = 0,
 			k = 0;
 
-		for (; i<threadCount && searching_1; i++) {
+		for (; i < threadCount * workSplit.length && searchingA; i++) {
 			if (trippleArray[i].getFlag() == true) {
-				searching_1 = false;
+				searchingA = false;
 				
-				for (k=i+1; k<threadCount && searching_2; k++) {
+				for (k=i+1; k < threadCount * workSplit.length && searchingB; k++) {
 					if (trippleArray[k].getFlag() == true) {
-						searching_2 = false;
+						searchingB = false;
 					}
 				}
 			}
 		}
 		i--; k--;
 		
-		if (searching_1 == false && searching_2 == false)  {
+		if (!searchingA && !searchingB)  {
 			trippleArray[i].setFlag(false);
 			trippleArray[k].setFlag(false);
 			object.setFirst(i);
@@ -131,21 +135,18 @@ public class Factorial {
 		boolean result = false;
 
 		if (first >= 0 && second >= 0) {
-			if (trippleArray[first].getFlag()==false && trippleArray[second].getFlag()==false) {
+			if (!trippleArray[first].getFlag() && !trippleArray[second].getFlag()) {
 				int 		scoreFirst 		= trippleArray[first].getScore(),
 							scoreSecond		= trippleArray[second].getScore();
 				BigInteger 	num1 			= trippleArray[first].getNumber(),
 							num2 			= trippleArray[second].getNumber();
+
+				trippleArray[first] = new Tripple(true, num1.multiply(num2), scoreFirst + scoreSecond);
+				trippleArray[second].setScore(0);
+				result = true;
 				
-				trippleArray[first].setNumber(num1.multiply(num2));
-				trippleArray[first].setScore(scoreFirst+scoreSecond);		
-				
-				if (scoreFirst+scoreSecond == threadCount) {
+				if (scoreFirst + scoreSecond == numberToSolve) {
 					setResult(trippleArray[first].getNumber());
-				}
-				else {
-					trippleArray[first].setFlag(true);
-					result = true;
 				}
 			}
 		}
@@ -168,8 +169,7 @@ public class Factorial {
 			}
 			result = result.multiply(temp);
 			temp = BigInteger.ONE;
-		}
-		
+		}		
 		
 		/**/long endTime = System.currentTimeMillis();
 		/**/System.out.println(resManager.getResource("time_noThreads") + (endTime - startTime));
@@ -182,11 +182,11 @@ public class Factorial {
 //------------------------------------------------------------------------------------------------------------
 	public static void main(String[] args)
 			throws InterruptedException, FileNotFoundException, UnsupportedEncodingException {
-		
+
 		resManager 					= new ResourceManager();
 		Scanner in 					= new Scanner(System.in);
 		int threadCount 			= 0,
-			number					= 0,
+			numberToSolve			= 0,
 			simulatedThreadCount 	= 0;
 		
 		//TODO: Add clues and specifics for the user
@@ -195,16 +195,16 @@ public class Factorial {
 			System.out.println(resManager.getResource("simulationChoice"));
 			simulatedThreadCount = setThreadCount(in);
 		}
-		number = setNumber(in);
+		numberToSolve = setNumber(in);
 		in.close();
 		
 		
 		
-		Factorial fact = new Factorial (threadCount);
+		Factorial fact = new Factorial (numberToSolve, threadCount);
 		
 		// without threads
-		if (fact.getThreadCount()==0 || fact.getThreadCount()==1) {
-			BigInteger result = solve(number, simulatedThreadCount);
+		if (threadCount==0 || threadCount==1) {
+			BigInteger result = solve(numberToSolve, simulatedThreadCount);
 			System.out.println(resManager.getResource("resultResponse"));
 			PrintWriter out = new PrintWriter(
 					resManager.getResource("outFileName_noThreads"), resManager.getResource("encoding"));
@@ -215,14 +215,14 @@ public class Factorial {
 		// with threads
 		//TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
 		else {
-			for (int i=0; i<threadCount; i++) {
+			for (int i=0; i<threadCount * workSplit.length; i++) {
 				fact.trippleArray[i] = new Tripple();
 			}
 			
 			/**/long startTime = System.currentTimeMillis();
 			
 			for (int i = 0; i < threadCount; i++) {
-				fact.threads[i] = new Thread(new FactorialRunnable(fact, i, number));
+				fact.threads[i] = new Thread(new FactorialRunnable(fact, i));
 				fact.threads[i].start();
 			}
 

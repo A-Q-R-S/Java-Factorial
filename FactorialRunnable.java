@@ -6,59 +6,97 @@ public class FactorialRunnable implements Runnable {
 	private int 		thread 			= 0, 
 						numberToSolve 	= 0, 
 						threadCount 	= 0,
-						first			= -1,
-						second			= -1;
-
-	public FactorialRunnable (Factorial fact, int thread, int numberToSolve) {
+						firstCell		= -1,
+						secondCell		= -1,
+						workSplitCount	= 1;
+	
+	public FactorialRunnable (Factorial fact, int thread) {
 		this.thread 		= thread;
-		this.numberToSolve 	= numberToSolve;
+		this.numberToSolve 	= fact.getNumberToSolve();
 		this.threadCount 	= fact.getThreadCount();
 		this.fact 			= fact;
-		this.first 			= -1;
-		this.second 		= -1;
-	}
+		this.firstCell 		= -1;
+		this.secondCell 	= -1;
+		this.workSplitCount	= Factorial.workSplit.length;
+	}	
 	
 	public int getFirst () {
-		return first;
+		return firstCell;
 	}
 	public void setFirst (int num) {
-		this.first = num;
+		this.firstCell = num;
 	}
 	public int getSecond () {
-		return second;
+		return secondCell;
 	}
 	public void setSecond (int num) {
-		this.second = num;
+		this.secondCell = num;
 	}
 	public int getThread () {
 		return thread;
 	}
-
+	
 	public void run() {
+		 
 		BigInteger 	threadResult 	= BigInteger.ONE;
-		boolean 	found2Cells		= false,
-					killThread 		= false;
+		boolean 	killThread		= false,
+					found2Cells		= false,
+					foundMultNumber	= false;
+		long 		startTime		= 0,
+					endTime			= 0;
+		int 		cycle 			= 0;
+		int			currentNumber	= thread + 1; // threads start from 0
+		int			division		= numberToSolve * Factorial.workSplit[0] / 100 + 1;
+			
 		
-		/**/long startTime = System.currentTimeMillis();
-		
-		for (int i = thread+1; i <= numberToSolve; i += threadCount) {
-			threadResult = threadResult.multiply(BigInteger.valueOf(i));
-		}
-		
-		fact.fillTrippleArray(thread, threadResult);
-		
-		/**/long endTime = System.currentTimeMillis();
-		/**/System.out.println("Thread " + thread + ": " + (endTime - startTime) + " milliseconds");
+		while (fact.getResult() == BigInteger.ONE && !killThread)
+		{				
+			/**/startTime = System.currentTimeMillis();
+			int score = 0;
+			
+			for (; currentNumber <= division && currentNumber <= numberToSolve; currentNumber += threadCount) {
+				threadResult = threadResult.multiply(BigInteger.valueOf(currentNumber));
+				foundMultNumber = true;
+				score ++;
+			}
+			if (foundMultNumber == true) {
+				fact.fillTrippleArray(cycle * threadCount + thread, threadResult, score);
+			}
+			/**/endTime += (System.currentTimeMillis() - startTime);
 
-		while (fact.getResult() == BigInteger.ONE && killThread == false) {
-
+			
 			synchronized (fact) {
 				found2Cells = fact.searcher(this);
 			}
-			if (found2Cells && fact.calculator(first, second)) {
-				killThread = true;
+			
+			/**/startTime = System.currentTimeMillis();
+			if (found2Cells)
+			{
+				if (fact.calculator(firstCell, secondCell))
+				{
+					workSplitCount --;
+					
+					if (workSplitCount <= 0)
+					{
+						killThread = true;
+					} 
+				}
+			}
+			/**/endTime += (System.currentTimeMillis() - startTime);
+			
+			// Now prepare for the new cycle:
+			if (currentNumber <= numberToSolve) {
+				cycle ++;
+				threadResult 	= BigInteger.ONE;
+				foundMultNumber	= false;
+				firstCell 		= -1;
+				secondCell 		= -1;
+				division 		+= numberToSolve * (Factorial.workSplit[cycle]) / 100 + 1;
+			} else {
+				killThread		= true;
 			}
 		}
+		
+		/**/System.out.println(">>> Finished " + thread + ": " + endTime + " milliseconds");
 	}
-
 }

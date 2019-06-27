@@ -3,24 +3,24 @@ import java.math.BigInteger;
 public class Tripple {
 	private boolean flag 		= false;
 	private BigInteger number 	= BigInteger.ONE;
-	private int score 			= 1;
+	private int score 			= -1;
 	
 	public Tripple () {
 		this.flag 	= false;	// false = closed for searching
 		this.number = BigInteger.ONE;
-		this.score 	= 1;
+		this.score 	= -1;
 	}
 	
-	public Tripple (boolean flag, BigInteger num) {
+	public Tripple (boolean flag, BigInteger num, int score) {
 		this.flag 	= flag;
 		this.number = num;
-		this.score 	= 1;
+		this.score 	= score;
 	}
 	
-	public void fillTripple (BigInteger num) {
+	public void fillTripple (BigInteger num, int score) {
 		this.flag 	= true;	// true = open for searching
 		this.number = num;
-		this.score 	= 1;
+		this.score 	= score;
 	}
 	
 	public boolean getFlag () {
