@@ -5,25 +5,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ResourceManager {
-	private File 	bufferedFile = null;
+	final private File 	bufferedFile;
 	
 	public ResourceManager () throws FileNotFoundException {
-		bufferedFile = new File("D:/Java_Workspace/Factorial-v0.0/src/resources.txt");
+		bufferedFile = new File(System.getProperty("user.dir") + "/src/resources.txt");
+		//bufferedFile = new File("D:/Java_Workspace/Factorial-v0.0/src/resources.txt");
 	}
 	
-	public String getResource (String resource) {
+	public String getResource (final String resName) {
 		String result = ""; 
 		try {
-			Scanner fileIn = new Scanner (bufferedFile);
+			if (bufferedFile == null) {
+				throw new FileNotFoundException("Buffered resources file not initialized!");
+			}
+			
+			final Scanner fileIn = new Scanner (bufferedFile);
 			boolean found = false;
 			
-			while (fileIn.hasNextLine() && !found) {
+			while (fileIn.hasNextLine() && !found)
+			{
 				fileIn.nextLine();
-				if (fileIn.findInLine (resource) != null) {
-					found = true;
-					String line = fileIn.nextLine();
-					String lineArr[] = line.split("%");
+				if (fileIn.findInLine (resName) != null)
+				{
+					final String line = fileIn.nextLine();
+					final String lineArr[] = line.split("%");
 					result = lineArr[lineArr.length-1];
+					found = true;
 				}
 			}
 			

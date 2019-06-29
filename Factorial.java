@@ -1,5 +1,3 @@
-
-
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -7,40 +5,41 @@ import java.math.BigInteger;
 import java.util.Scanner;
 
 public class Factorial {
-	private int 		threadCount = 0;
-	private Thread[] 	threads = null;
-	private BigInteger 	result = BigInteger.ONE;
 	private static ResourceManager resManager;
-	private Tripple[] 	trippleArray 	= null;
+	private int						numberToSolve	= 0;
+	private int 					threadCount 	= 0;
+	private Thread[] 				threads 		= null;
+	public static Tripple[] 		trippleArray 	= null;
+	public static BigInteger 		result 			= BigInteger.valueOf(-1);
+	public static final int[]		workSplit 		= {30,25,20,15,10,5};
 	
 	public Factorial () {
-		this.threadCount 		= 0;
-		this.result 			= BigInteger.ONE;
-		this.threads 			= null;
-		this.trippleArray 		= null;
+		this.threadCount 			= 0;
+		Factorial.result 			= BigInteger.valueOf(-1);
+		this.threads 				= null;
+		Factorial.trippleArray 		= null;
 	}
 	
-	public Factorial (int threadCount) {
-		if (threadCount == 0 || threadCount == 1) {
-			this.threadCount 	= 0;
-			this.result 		= BigInteger.ONE;
-			this.threads 		= null;
-			this.trippleArray 	= null;
+	public Factorial (int numberToSolve, int threadCount) throws Exception
+	{	
+		if (numberToSolve < 0) {
+			throw new Exception("Negative numberToSolve!");
 		}
-		else {
-			this.threadCount 	= threadCount;
-			this.result 		= BigInteger.ONE;
-			this.threads 		= new Thread[threadCount];
-			this.trippleArray 	= new Tripple[threadCount];
-		}
-	}
-	
-	public BigInteger getResult() {
-		return this.result;
+		
+		this.threadCount 			= threadCount;
+		this.threads 				= new Thread[threadCount];
+		this.numberToSolve			= numberToSolve;
+		
+		Factorial.trippleArray 		= new Tripple[threadCount * workSplit.length];
+		Factorial.result 			= BigInteger.valueOf(-1);
 	}
 
-	public void setResult(BigInteger result) {
-		this.result = result;
+	public static void setResult(BigInteger result) {
+		Factorial.result = result;
+	}
+
+	public int getNumberToSolve() {
+		return this.numberToSolve;
 	}
 
 	public int getThreadCount() {
@@ -91,88 +90,25 @@ public class Factorial {
 		return number;
 	}
 	
-	public void fillTrippleArray(int cell, BigInteger threadResult) {
-		trippleArray[cell].fillTripple(threadResult);
-	}
-
-	public boolean searcher (FactorialRunnable object) {
-		
-		boolean searching_1 = true,
-				searching_2 = true,
-				result		= false;
-		int	i = 0,
-			k = 0;
-
-		for (; i<threadCount && searching_1; i++) {
-			if (trippleArray[i].getFlag() == true) {
-				searching_1 = false;
-				
-				for (k=i+1; k<threadCount && searching_2; k++) {
-					if (trippleArray[k].getFlag() == true) {
-						searching_2 = false;
-					}
-				}
-			}
-		}
-		i--; k--;
-		
-		if (searching_1 == false && searching_2 == false)  {
-			trippleArray[i].setFlag(false);
-			trippleArray[k].setFlag(false);
-			object.setFirst(i);
-			object.setSecond(k);
-			result = true;
-		}
-		return result;
-	}
-	
-	public boolean calculator (int first, int second) {
-		
-		boolean result = false;
-
-		if (first >= 0 && second >= 0) {
-			if (trippleArray[first].getFlag()==false && trippleArray[second].getFlag()==false) {
-				int 		scoreFirst 		= trippleArray[first].getScore(),
-							scoreSecond		= trippleArray[second].getScore();
-				BigInteger 	num1 			= trippleArray[first].getNumber(),
-							num2 			= trippleArray[second].getNumber();
-				
-				trippleArray[first].setNumber(num1.multiply(num2));
-				trippleArray[first].setScore(scoreFirst+scoreSecond);		
-				
-				if (scoreFirst+scoreSecond == threadCount) {
-					setResult(trippleArray[first].getNumber());
-				}
-				else {
-					trippleArray[first].setFlag(true);
-					result = true;
-				}
-			}
-		}
-		return result;
-	}
-	
 	// without threads
-	// TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
-	private static BigInteger solve(int number, int threadCount) {
-		BigInteger result 	= BigInteger.ONE;
-		BigInteger temp 	= BigInteger.ONE;
+	private static BigInteger solve(int number, int threadCount)
+	{
+		BigInteger 	result 	= BigInteger.ONE;
+		Timer 		timer 	= new Timer();
+		
 		if (threadCount == 0) {
 			threadCount = 1;
 		}
 		
-		/**/long startTime = System.currentTimeMillis();
 		for (int i=0; i<threadCount; i++) {
+			BigInteger temp = BigInteger.ONE;
 			for (int k=i+1; k <= number; k += threadCount) {
 				temp = temp.multiply(BigInteger.valueOf(k));
 			}
 			result = result.multiply(temp);
-			temp = BigInteger.ONE;
-		}
+		}		
 		
-		
-		/**/long endTime = System.currentTimeMillis();
-		/**/System.out.println(resManager.getResource("time_noThreads") + (endTime - startTime));
+		System.out.println(resManager.getResource("time_noThreads") + timer.getCurrent());
 		return result;
 	}
 
@@ -182,29 +118,25 @@ public class Factorial {
 //------------------------------------------------------------------------------------------------------------
 	public static void main(String[] args)
 			throws InterruptedException, FileNotFoundException, UnsupportedEncodingException {
-		
+
 		resManager 					= new ResourceManager();
 		Scanner in 					= new Scanner(System.in);
 		int threadCount 			= 0,
-			number					= 0,
+			numberToSolve			= 0,
 			simulatedThreadCount 	= 0;
 		
-		//TODO: Add clues and specifics for the user
 		threadCount = setThreadCount(in);
 		if (threadCount == 0) {
 			System.out.println(resManager.getResource("simulationChoice"));
 			simulatedThreadCount = setThreadCount(in);
 		}
-		number = setNumber(in);
+		numberToSolve = setNumber(in);
 		in.close();
 		
 		
-		
-		Factorial fact = new Factorial (threadCount);
-		
 		// without threads
-		if (fact.getThreadCount()==0 || fact.getThreadCount()==1) {
-			BigInteger result = solve(number, simulatedThreadCount);
+		if (threadCount==0 || threadCount==1) {
+			BigInteger result = solve(numberToSolve, simulatedThreadCount);
 			System.out.println(resManager.getResource("resultResponse"));
 			PrintWriter out = new PrintWriter(
 					resManager.getResource("outFileName_noThreads"), resManager.getResource("encoding"));
@@ -213,37 +145,37 @@ public class Factorial {
 		}
 		
 		// with threads
-		//TODO: /**/ Could time measurements be moved out to a c++ style class constructor/destructor?
 		else {
-			for (int i=0; i<threadCount; i++) {
-				fact.trippleArray[i] = new Tripple();
-			}
+			Factorial fact;
+			try {
+				fact = new Factorial (numberToSolve, threadCount);
 			
-			/**/long startTime = System.currentTimeMillis();
-			
-			for (int i = 0; i < threadCount; i++) {
-				fact.threads[i] = new Thread(new FactorialRunnable(fact, i, number));
-				fact.threads[i].start();
-			}
+				for (int i=0; i<threadCount * Factorial.workSplit.length; i++) {
+					Factorial.trippleArray[i] = new Tripple();
+				}
+				
+				Timer timer = new Timer();
+				
+				for (int i = 0; i < threadCount; i++) {
+					fact.threads[i] = new Thread(new FactorialRunnable(fact, i));
+					fact.threads[i].start();
+				}
+	
+				for (int i = 0; i < threadCount; i++) {
+					fact.threads[i].join();
+				}
+				
+				System.out.println(
+						resManager.getResource("time_threads") + timer.getCurrent() + resManager.getResource("units"));
+				System.out.println(resManager.getResource("resultResponse"));
+				PrintWriter out2 = new PrintWriter(
+						resManager.getResource("outFileName_threads"), resManager.getResource("encoding"));
+				out2.println(Factorial.result.toString());
+				out2.close();
 
-			for (int i = 0; i < threadCount; i++) {
-				fact.threads[i].join();
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
-			
-			/**/long endTime = System.currentTimeMillis();
-			/**/System.out.println(
-					resManager.getResource("time_threads") + (endTime - startTime) + resManager.getResource("units"));
-			/**/System.out.println(resManager.getResource("resultResponse"));
-			PrintWriter out2 = new PrintWriter(
-					resManager.getResource("outFileName_threads"), resManager.getResource("encoding"));
-			out2.println(fact.result.toString());
-			out2.close();
 		}
-
-		
-		
-		//TODO: clean up and secure the class
-		
 	}
-
 }

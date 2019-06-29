@@ -1,49 +1,49 @@
 import java.math.BigInteger;
 
 public class Tripple {
-	private boolean flag 		= false;
-	private BigInteger number 	= BigInteger.ONE;
-	private int score 			= 1;
+	private boolean isSearchable	= false;
+	private BigInteger number 		= BigInteger.valueOf(-1);
+	private int calculationsCount	= -1;
 	
 	public Tripple () {
-		this.flag 	= false;	// false = closed for searching
-		this.number = BigInteger.ONE;
-		this.score 	= 1;
+		this.isSearchable 		= false;
+		this.number 			= BigInteger.valueOf(-1);
+		this.calculationsCount 	= -1;
 	}
 	
-	public Tripple (boolean flag, BigInteger num) {
-		this.flag 	= flag;
-		this.number = num;
-		this.score 	= 1;
+	public Tripple (boolean isSearchable, final BigInteger num, int calculationsCount) {
+		this.isSearchable 		= isSearchable;
+		this.number 			= num;
+		this.calculationsCount 	= calculationsCount;
 	}
 	
-	public void fillTripple (BigInteger num) {
-		this.flag 	= true;	// true = open for searching
-		this.number = num;
-		this.score 	= 1;
+	public void fillTripple (final BigInteger num, int calculationsCount) {
+		this.isSearchable 		= true;
+		this.number 			= num;
+		this.calculationsCount 	= calculationsCount;
 	}
 	
-	public boolean getFlag () {
-		return flag;
+	public boolean getIsSearchable () {
+		return isSearchable;
 		}
 	
-	public void setFlag (boolean flag) {
-		this.flag = flag;
+	public void setIsSearchable (boolean isSearchable) {
+		this.isSearchable = isSearchable;
 	}
 	
 	public BigInteger getNumber () {
 		return number;
 	}
 	
-	public void setNumber (BigInteger number) {
+	public void setNumber (final BigInteger number) {
 		this.number = number;
 	}
 	
-	public int getScore () {
-		return score;
+	public int getCalculationsCount () {
+		return calculationsCount;
 	}
 	
-	public void setScore (int score) {
-		this.score = score;
+	public void setCalculationsCount (int calculationsCount) {
+		this.calculationsCount = calculationsCount;
 	}
 }
